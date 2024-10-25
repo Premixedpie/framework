@@ -228,7 +228,8 @@ abstract class Controller {
 	{
 		$this->setupLayout();
 
-		$response = call_user_func_array(array($this, $method), $parameters);
+		$parameterValues = array_values($parameters);
+		$response = call_user_func_array(array($this, $method), $parameterValues);
 
 		// If no response is returned from the controller action and a layout is being
 		// used we will assume we want to just return the layout view as any nested

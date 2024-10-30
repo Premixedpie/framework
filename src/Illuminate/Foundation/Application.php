@@ -678,6 +678,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
 
 			array_unshift($parameters, $class);
 
+			$parameters = array_values($parameters);
 			call_user_func_array(array($stack, 'push'), $parameters);
 		}
 	}

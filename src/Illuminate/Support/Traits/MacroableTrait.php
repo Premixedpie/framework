@@ -45,6 +45,7 @@ trait MacroableTrait {
 	{
 		if (static::hasMacro($method))
 		{
+			$parameters = array_values($parameters);
 			return call_user_func_array(static::$macros[$method], $parameters);
 		}
 

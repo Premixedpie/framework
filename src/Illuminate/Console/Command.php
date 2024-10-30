@@ -75,11 +75,13 @@ class Command extends \Symfony\Component\Console\Command\Command {
 		// passed into these commands as "parameters" to control the execution.
 		foreach ($this->getArguments() as $arguments)
 		{
+			$arguments = array_values($arguments);
 			call_user_func_array(array($this, 'addArgument'), $arguments);
 		}
 
 		foreach ($this->getOptions() as $options)
 		{
+			$options = array_values($options);
 			call_user_func_array(array($this, 'addOption'), $options);
 		}
 	}

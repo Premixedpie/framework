@@ -216,7 +216,7 @@ class QueueManager {
 	public function __call($method, $parameters)
 	{
 		$callable = array($this->connection(), $method);
-
+		$parameters = array_values($parameters);
 		return call_user_func_array($callable, $parameters);
 	}
 

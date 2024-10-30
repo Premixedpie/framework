@@ -2461,14 +2461,15 @@ class Validator implements MessageProviderInterface {
 	protected function callExtension($rule, $parameters)
 	{
 		$callback = $this->extensions[$rule];
+		$parameterValues = array_values($parameterValues);
 
 		if ($callback instanceof Closure)
 		{
-			return call_user_func_array($callback, $parameters);
+			return call_user_func_array($callback, $parameterValues);
 		}
 		elseif (is_string($callback))
 		{
-			return $this->callClassBasedExtension($callback, $parameters);
+			return $this->callClassBasedExtension($callback, $parameterValues);
 		}
 	}
 
@@ -2482,8 +2483,9 @@ class Validator implements MessageProviderInterface {
 	protected function callClassBasedExtension($callback, $parameters)
 	{
 		list($class, $method) = explode('@', $callback);
-
-		return call_user_func_array(array($this->container->make($class), $method), $parameters);
+		$parameterValues = array_values($parameters);
+		
+		return call_user_func_array(array($this->container->make($class), $method), $parameterValues);
 	}
 
 	/**

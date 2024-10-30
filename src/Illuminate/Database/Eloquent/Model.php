@@ -3103,11 +3103,13 @@ abstract class Model implements ArrayAccess, ArrayableInterface, JsonableInterfa
 	{
 		if (in_array($method, array('increment', 'decrement')))
 		{
+			$parameters = array_values($parameters);
 			return call_user_func_array(array($this, $method), $parameters);
 		}
 
 		$query = $this->newQuery();
 
+		$parameters = array_values($parameters);
 		return call_user_func_array(array($query, $method), $parameters);
 	}
 
@@ -3122,6 +3124,7 @@ abstract class Model implements ArrayAccess, ArrayableInterface, JsonableInterfa
 	{
 		$instance = new static;
 
+		$parameters = array_values($parameters);
 		return call_user_func_array(array($instance, $method), $parameters);
 	}
 

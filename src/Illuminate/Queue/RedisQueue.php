@@ -234,7 +234,8 @@ class RedisQueue extends Queue implements QueueInterface {
 	 */
 	protected function pushExpiredJobsOntoNewQueue($transaction, $to, $jobs)
 	{
-		call_user_func_array([$transaction, 'rpush'], array_merge([$to], $jobs));
+		$parameters = array_values(array_merge([$to], $jobs));
+		call_user_func_array([$transaction, 'rpush'], $parameters);
 	}
 
 	/**

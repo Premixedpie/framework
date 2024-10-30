@@ -80,6 +80,7 @@ class Database {
 	 */
 	public function command($method, array $parameters = array())
 	{
+		$parameters = array_values($parameters);
 		return call_user_func_array(array($this->clients['default'], $method), $parameters);
 	}
 

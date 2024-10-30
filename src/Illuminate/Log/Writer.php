@@ -73,6 +73,12 @@ class Writer {
 			$parameters[0] = json_encode($parameters[0]);
 		}
 
+		if ( isset($parameters[0]) && in_array($parameters[0], ['debug', 'info', 'notice', 'warning', 'error', 'critical', 'alert', 'emergency']) ) {
+			array_shift($parameters);
+		}
+
+		$parameters = array_values($parameters);
+
 		return call_user_func_array(array($this->monolog, $method), $parameters);
 	}
 
@@ -272,8 +278,8 @@ class Writer {
 		if (in_array($method, $this->levels))
 		{
 			$this->formatParameters($parameters);
-
-			call_user_func_array(array($this, 'fireLogEvent'), array_merge(array($method), $parameters));
+			$parameters = array_values(array_merge(array($method), $parameters));
+			call_user_func_array(array($this, 'fireLogEvent'), $parameters);
 
 			$method = 'add'.ucfirst($method);
 

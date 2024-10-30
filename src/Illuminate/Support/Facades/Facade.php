@@ -217,6 +217,7 @@ abstract class Facade {
 				return $instance->$method($args[0], $args[1], $args[2], $args[3]);
 
 			default:
+				$args = array_values($args);
 				return call_user_func_array(array($instance, $method), $args);
 		}
 	}

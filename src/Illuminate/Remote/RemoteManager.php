@@ -193,6 +193,7 @@ class RemoteManager {
 	 */
 	public function __call($method, $parameters)
 	{
+		$parameters = array_values($parameters);
 		return call_user_func_array(array($this->connection(), $method), $parameters);
 	}
 

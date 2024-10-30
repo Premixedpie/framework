@@ -855,7 +855,7 @@ class Builder {
 	protected function callScope($scope, $parameters)
 	{
 		array_unshift($parameters, $this);
-
+		$parameters = array_values($parameters);
 		return call_user_func_array(array($this->model, $scope), $parameters) ?: $this;
 	}
 
@@ -961,6 +961,7 @@ class Builder {
 		if (isset($this->macros[$method]))
 		{
 			array_unshift($parameters, $this);
+			$parameters = array_values($parameters);
 
 			return call_user_func_array($this->macros[$method], $parameters);
 		}
@@ -969,6 +970,7 @@ class Builder {
 			return $this->callScope($scope, $parameters);
 		}
 
+		$parameters = array_values($parameters);
 		$result = call_user_func_array(array($this->query, $method), $parameters);
 
 		return in_array($method, $this->passthru) ? $result : $this;

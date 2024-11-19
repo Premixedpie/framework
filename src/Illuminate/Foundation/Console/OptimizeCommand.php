@@ -62,9 +62,13 @@ class OptimizeCommand extends Command {
 
 		if ($this->option('force') || ! $this->laravel['config']['app.debug'])
 		{
+			/* 
+			// Disabled, requires updates to php-parser and moving off of jeremeamia/super_closure to new lib.
+			// Maybe in the future but currently we don't even use compiled classes on live.
 			$this->info('Compiling common classes');
 
 			$this->compileClasses();
+			*/
 
 			$this->info('Compiling views');
 

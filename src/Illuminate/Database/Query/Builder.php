@@ -629,13 +629,15 @@ class Builder {
 	 */
 	public function addNestedWhereQuery($query, $boolean = 'and')
 	{
-		if (count($query->wheres))
-		{
-			$type = 'Nested';
+		if ( $query->wheres ) {
+			if (count($query->wheres))
+			{
+				$type = 'Nested';
 
-			$this->wheres[] = compact('type', 'query', 'boolean');
+				$this->wheres[] = compact('type', 'query', 'boolean');
 
-			$this->mergeBindings($query);
+				$this->mergeBindings($query);
+			}
 		}
 
 		return $this;

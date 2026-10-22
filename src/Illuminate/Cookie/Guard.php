@@ -6,6 +6,7 @@ use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\Security\Core\Util\StringUtils;
 
 class Guard implements HttpKernelInterface {
 
@@ -63,7 +64,7 @@ class Guard implements HttpKernelInterface {
 		{
 			try
 			{
-				$request->cookies->set($key, $this->decryptCookie($c));
+				$request->cookies->set($key, $this->decryptCookie($key, $c));
 			}
 			catch (DecryptException $e)
 			{
@@ -77,29 +78,39 @@ class Guard implements HttpKernelInterface {
 	/**
 	 * Decrypt the given cookie and return the value.
 	 *
+	 * @param  string  $name
 	 * @param  string|array  $cookie
 	 * @return string|array
 	 */
-	protected function decryptCookie($cookie)
+	protected function decryptCookie($name, $cookie)
 	{
-		return is_array($cookie)
-						? $this->decryptArray($cookie)
-						: $this->encrypter->decrypt($cookie);
+		if (is_array($cookie)) return $this->decryptArray($cookie, $name);
+
+		$value = $this->encrypter->decryptString($cookie);
+		$prefix = $this->cookieValuePrefix($name);
+
+		if ( ! StringUtils::equals($prefix, substr($value, 0, strlen($prefix))))
+		{
+			throw new DecryptException('Cookie name is invalid.');
+		}
+
+		return substr($value, strlen($prefix));
 	}
 
 	/**
 	 * Decrypt an array based cookie.
 	 *
 	 * @param  array  $cookie
+	 * @param  string  $name
 	 * @return array
 	 */
-	protected function decryptArray(array $cookie)
+	protected function decryptArray(array $cookie, $name)
 	{
 		$decrypted = array();
 
 		foreach ($cookie as $key => $value)
 		{
-			$decrypted[$key] = $this->encrypter->decrypt($value);
+			$decrypted[$key] = $this->decryptCookie($name.'['.$key.']', $value);
 		}
 
 		return $decrypted;
@@ -115,12 +126,25 @@ class Guard implements HttpKernelInterface {
 	{
 		foreach ($response->headers->getCookies() as $key => $c)
 		{
-			$encrypted = $this->encrypter->encrypt($c->getValue());
+			$value = $this->cookieValuePrefix($c->getName()).$c->getValue();
+
+			$encrypted = $this->encrypter->encryptString($value);
 
 			$response->headers->setCookie($this->duplicate($c, $encrypted));
 		}
 
 		return $response;
+	}
+
+	/**
+	 * Bind a cookie value to its name before encryption.
+	 *
+	 * @param  string  $name
+	 * @return string
+	 */
+	protected function cookieValuePrefix($name)
+	{
+		return hash_hmac('sha256', $name.'v2', $this->encrypter->getKey()).'|';
 	}
 
 	/**

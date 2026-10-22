@@ -10,6 +10,13 @@ use Illuminate\View\View as View;
 class Factory {
 
 	/**
+	 * The unpredictable placeholder used for parent sections.
+	 *
+	 * @var string
+	 */
+	protected $parentPlaceholder;
+
+	/**
 	 * The engine implementation.
 	 *
 	 * @var \Illuminate\View\Engines\EngineResolver
@@ -581,7 +588,7 @@ class Factory {
 	{
 		if (isset($this->sections[$section]))
 		{
-			$content = str_replace('@parent', $content, $this->sections[$section]);
+			$content = str_replace($this->getParentPlaceholder(), $content, $this->sections[$section]);
 		}
 
 		$this->sections[$section] = $content;
@@ -603,7 +610,22 @@ class Factory {
 			$sectionContent = $this->sections[$section];
 		}
 
-		return str_replace('@parent', '', $sectionContent);
+		return str_replace($this->getParentPlaceholder(), '', $sectionContent);
+	}
+
+	/**
+	 * Get a parent placeholder that cannot be supplied through user input.
+	 *
+	 * @return string
+	 */
+	public function getParentPlaceholder()
+	{
+		if (is_null($this->parentPlaceholder))
+		{
+			$this->parentPlaceholder = '##parent-placeholder-'.str_random(40).'##';
+		}
+
+		return $this->parentPlaceholder;
 	}
 
 	/**

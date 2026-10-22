@@ -52,6 +52,19 @@ class Encrypter {
 	 */
 	public function encrypt($value)
 	{
+		return $this->encryptString(serialize($value));
+	}
+
+	/**
+	 * Encrypt a string without serializing it.
+	 *
+	 * @param  string  $value
+	 * @return string
+	 */
+	public function encryptString($value)
+	{
+		if ( ! is_string($value)) throw new \InvalidArgumentException('The value must be a string.');
+
 		$iv = mcrypt_create_iv($this->getIvSize(), $this->getRandomizer());
 
 		$value = base64_encode($this->padAndMcrypt($value, $iv));
@@ -73,7 +86,7 @@ class Encrypter {
 	 */
 	protected function padAndMcrypt($value, $iv)
 	{
-		$value = $this->addPadding(serialize($value));
+		$value = $this->addPadding($value);
 
 		return mcrypt_encrypt($this->cipher, $this->key, $value, $this->mode, $iv);
 	}
@@ -86,16 +99,27 @@ class Encrypter {
 	 */
 	public function decrypt($payload)
 	{
+		return unserialize($this->decryptString($payload));
+	}
+
+	/**
+	 * Decrypt a string without unserializing it.
+	 *
+	 * @param  string  $payload
+	 * @return string
+	 */
+	public function decryptString($payload)
+	{
 		$payload = $this->getJsonPayload($payload);
 
-		// We'll go ahead and remove the PKCS7 padding from the encrypted value before
-		// we decrypt it. Once we have the de-padded value, we will grab the vector
-		// and decrypt the data, passing back the unserialized from of the value.
+		// Authenticate the payload before decrypting it, then remove PKCS7 padding.
+		// Cookie values use this method so that no objects can be instantiated
+		// from a request, even when a valid encrypted payload is supplied.
 		$value = base64_decode($payload['value']);
 
 		$iv = base64_decode($payload['iv']);
 
-		return unserialize($this->stripPadding($this->mcryptDecrypt($value, $iv)));
+		return $this->stripPadding($this->mcryptDecrypt($value, $iv));
 	}
 
 	/**
@@ -129,7 +153,9 @@ class Encrypter {
 	 */
 	protected function getJsonPayload($payload)
 	{
-		$payload = json_decode(base64_decode($payload), true);
+		if ( ! is_string($payload)) throw new DecryptException('Invalid data.');
+
+		$payload = json_decode(base64_decode($payload, true), true);
 
 		// If the payload is not valid JSON or does not have the proper keys set we will
 		// assume it is invalid and bail out of the routine since we will not be able
@@ -229,7 +255,16 @@ class Encrypter {
 	 */
 	protected function invalidPayload($data)
 	{
-		return ! is_array($data) || ! isset($data['iv']) || ! isset($data['value']) || ! isset($data['mac']);
+		if ( ! is_array($data) || ! isset($data['iv'], $data['value'], $data['mac'])) return true;
+
+		if ( ! is_string($data['iv']) || ! is_string($data['value']) || ! is_string($data['mac'])) return true;
+
+		$iv = base64_decode($data['iv'], true);
+		$value = base64_decode($data['value'], true);
+
+		return $iv === false || strlen($iv) !== $this->getIvSize() ||
+		       $value === false || $value === '' || strlen($value) % $this->getIvSize() !== 0 ||
+		       ! preg_match('/\A[a-f0-9]{64}\z/', $data['mac']);
 	}
 
 	/**
@@ -256,6 +291,16 @@ class Encrypter {
 		mt_srand();
 
 		return MCRYPT_RAND;
+	}
+
+	/**
+	 * Get the encryption key.
+	 *
+	 * @return string
+	 */
+	public function getKey()
+	{
+		return $this->key;
 	}
 
 	/**

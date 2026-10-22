@@ -1148,6 +1148,8 @@ class Validator implements MessageProviderInterface {
 	 */
 	protected function validateEmail($attribute, $value)
 	{
+		if ( ! is_string($value) || preg_match('/[\r\n]/', $value)) return false;
+
 		return filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
 	}
 

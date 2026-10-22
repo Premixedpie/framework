@@ -284,6 +284,17 @@ class BladeCompiler extends Compiler implements CompilerInterface {
 	}
 
 	/**
+	 * Compile the parent statement into a runtime placeholder.
+	 *
+	 * @param  string  $expression
+	 * @return string
+	 */
+	protected function compileParent($expression)
+	{
+		return '<?php echo $__env->getParentPlaceholder(); ?>';
+	}
+
+	/**
 	 * Compile the yield statements into valid PHP.
 	 *
 	 * @param  string  $expression

@@ -482,18 +482,53 @@ class Connection implements ConnectionInterface {
 	/**
 	 * Start a new database transaction.
 	 *
+	 * The counter is only incremented after PDO has started the transaction, so
+	 * a dead connection cannot leave the counter stuck above zero (which blocks
+	 * every later reconnect with "Can't swap PDO instance while within
+	 * transaction"). A connection lost while idle is reconnected once before the
+	 * outermost transaction begins, which is safe because nothing is open yet.
+	 *
 	 * @return void
 	 */
 	public function beginTransaction()
 	{
-		++$this->transactions;
-
-		if ($this->transactions == 1)
+		if ($this->transactions == 0)
 		{
-			$this->pdo->beginTransaction();
+			$this->reconnectIfMissingConnection();
+
+			try
+			{
+				$this->pdo->beginTransaction();
+			}
+			catch (\Exception $e)
+			{
+				if ( ! $this->causedByLostConnectionMessage($e->getMessage())) throw $e;
+
+				$this->reconnect();
+
+				$this->pdo->beginTransaction();
+			}
 		}
 
+		++$this->transactions;
+
 		$this->fireConnectionEvent('beganTransaction');
+	}
+
+	/**
+	 * Determine if an error message indicates a lost connection.
+	 *
+	 * @param  string  $message
+	 * @return bool
+	 */
+	protected function causedByLostConnectionMessage($message)
+	{
+		foreach (array('server has gone away', 'Lost connection', 'Error while sending') as $needle)
+		{
+			if (strpos($message, $needle) !== false) return true;
+		}
+
+		return false;
 	}
 
 	/**
